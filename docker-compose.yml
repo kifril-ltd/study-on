@@ -1,0 +1,38 @@
+version: "3.1"
+volumes:
+  postgres: ~
+services:
+  nginx:
+    container_name: ${APP_NAME}_nginx
+    image: nginx:alpine
+    working_dir: /app
+    volumes:
+      - ${PWD}:/app
+      - ./docker/hosts/app.conf:/etc/nginx/conf.d/default.conf
+      - ./docker/hosts/symfony:/etc/nginx/symfony
+    ports:
+      - "${NGINX_PORT}:80"
+    links:
+      - php
+  postgres:
+    container_name: ${APP_NAME}_postgres
+    ports:  #Нельзя использовать проброс портов на реальном проекте
+      - "127.0.0.1:5431:5432"
+    image: postgres:alpine
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+  php:
+    container_name: ${APP_NAME}_php
+    build: docker/images/php
+    working_dir: /app
+    user: ${UID:-1000}:${GID:-1000}
+    volumes:
+      - ${PWD}:/app
+      - ${HOME}/.composer:/.composer
+    environment:
+      - COMPOSER_ALLOW_SUPERUSER=1
+    links:
+      - postgres
