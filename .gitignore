@@ -14,13 +14,15 @@
 /phpunit.xml
 ###< symfony/phpunit-bridge ###
 
-###> phpunit/phpunit ###
-/phpunit.xml
-.phpunit.result.cache
-###< phpunit/phpunit ###
-
 ###> make ###
 local.mk
 ###< make ###
+
+###> php storm ###
+/.idea/
+###< php storm ###
+
+
+
 
 
