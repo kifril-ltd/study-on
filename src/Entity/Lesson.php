@@ -14,7 +14,7 @@ class Lesson
     #[ORM\Column(type: 'integer')]
     private $id;
 
-    #[ORM\ManyToOne(targetEntity: Course::class, inversedBy: 'lessons')]
+    #[ORM\ManyToOne(targetEntity: Course::class, cascade: ['persist'], inversedBy: 'lessons')]
     #[ORM\JoinColumn(nullable: false)]
     private $course;
 
