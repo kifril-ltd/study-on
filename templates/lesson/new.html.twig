@@ -3,9 +3,9 @@
 {% block title %}New Lesson{% endblock %}
 
 {% block body %}
-    <h1>Create new Lesson</h1>
+    <h1>Добавить новый урок</h1>
 
     {{ include('lesson/_form.html.twig') }}
 
-    <a href="{{ path('app_lesson_index') }}">back to list</a>
+    <a href="{{ path('app_course_show', {'id': course}) }}">Обратно к курсу</a>
 {% endblock %}

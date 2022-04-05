@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Course;
 use App\Entity\Lesson;
 use App\Form\LessonType;
 use App\Repository\LessonRepository;
@@ -21,11 +22,11 @@ class LessonController extends AbstractController
         ]);
     }
 
-    #[Route('/new', name: 'app_lesson_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, LessonRepository $lessonRepository): Response
+    #[Route('/new/{course}', name: 'app_lesson_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, LessonRepository $lessonRepository, Course $course): Response
     {
         $lesson = new Lesson();
-        $form = $this->createForm(LessonType::class, $lesson);
+        $form = $this->createForm(LessonType::class, $lesson, ['course' => $course]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -36,6 +37,7 @@ class LessonController extends AbstractController
         return $this->renderForm('lesson/new.html.twig', [
             'lesson' => $lesson,
             'form' => $form,
+            'course' => $course,
         ]);
     }
 
