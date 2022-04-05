@@ -16,27 +16,14 @@
         </tbody>
     </table>
 
-    <table class="table">
-        <thead>
-        <tr>
-            <th>Номер</th>
-            <th>Название</th>
-        </tr>
-        </thead>
-        <tbody>
+    <h2>Уроки</h2>
+    <ol>
         {% for lesson in course.lessons|sort((a, b) => a.number <=> b.number)%}
-            <tr>
-                <td>{{ lesson.number }}</td>
-                <td><a href="{{ path('app_lesson_show', {'id': lesson.id}) }}">{{ lesson.name }}</a></td>
-            </tr>
+            <li><a href="{{ path('app_lesson_show', {'id': lesson.id}) }}">{{ lesson.name }}</a></li>
         {% else %}
-            <tr>
-                <td colspan="5">Список пуст</td>
-            </tr>
+            <div>Список пуст!</div>
         {% endfor %}
-        </tbody>
-    </table>
-
+    </ol>
     <hr>
     <a href="{{ path('app_course_index') }}">Вернуться к списку курсов</a>
 
