@@ -48,9 +48,7 @@ class LessonType extends AbstractType
                     )
                 ],
             ])
-            ->add('course', HiddenType::class, [
-                'data' => $options['course']
-            ]);
+            ->add('course', HiddenType::class);
 
         $builder->get('course')
             ->addModelTransformer($this->transformer);
