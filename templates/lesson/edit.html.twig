@@ -1,13 +1,13 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Edit Lesson{% endblock %}
+{% block title %}Изменение урока{% endblock %}
 
 {% block body %}
-    <h1>Edit Lesson</h1>
+    <h1>Изменение урока</h1>
 
-    {{ include('lesson/_form.html.twig', {'button_label': 'Update'}) }}
+    {{ include('lesson/_form.html.twig', {'button_label': 'Сохранить'}) }}
 
-    <a href="{{ path('app_lesson_index') }}">back to list</a>
+    <a href="{{ path('app_course_show', {'id': lesson.course.id}) }}">Вернуться к курсу</a>
 
     {{ include('lesson/_delete_form.html.twig') }}
 {% endblock %}
