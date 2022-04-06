@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Lesson{% endblock %}
+{% block title %}{{ lesson.name }} / {{ lesson.course.name }} / StudyOn{% endblock %}
 
 {% block body %}
     <h1>{{ lesson.name }}</h1>
