@@ -16,7 +16,13 @@
         {% for course in courses %}
             <tr>
                 <td><a href="{{ path('app_course_show', {'id': course.id}) }}">{{ course.name }}</a></td>
-                <td>{{ course.description }}</td>
+                <td>
+                    {% if course.description %}
+                        {{ course.description }}
+                    {% else %}
+                        Нет описания
+                    {% endif %}
+                </td>
             </tr>
         {% else %}
             <tr>
