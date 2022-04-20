@@ -32,6 +32,7 @@ class CourseType extends AbstractType
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Описание',
+                'required' => false,
                 'constraints' => [
                     new Length(max: 1000, maxMessage: 'Код курса должно быть не более 1000 символов')
                 ],
