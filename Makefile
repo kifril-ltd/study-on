@@ -1,5 +1,6 @@
 COMPOSE=docker-compose
-PHP=$(COMPOSE) exec php
+DOCKER=docker
+PHP=$(DOCKER) exec -it study_on_php
 CONSOLE=$(PHP) bin/console
 COMPOSER=$(PHP) composer
 
