@@ -30,8 +30,8 @@ class LessonType extends AbstractType
             ->add('name', TextType::class, [
                 'label' => 'Название',
                 'constraints' => [
-                    new NotBlank(message: 'Поле не может быть пустым'),
-                    new Length(max: 255, maxMessage: 'Название урока должно быть не более 255 символов')
+                    new NotBlank(),
+                    new Length(max: 255)
                 ],
             ])
             ->add('content', TextareaType::class, [
@@ -40,9 +40,8 @@ class LessonType extends AbstractType
             ->add('number', NumberType::class, [
                 'label' => 'Порядковый номер',
                 'constraints' => [
-                    new NotBlank(message: 'Поле не может быть пустым'),
+                    new NotBlank(),
                     new Range(
-                        notInRangeMessage: 'Значение поля должно быть в пределах от {{ min }} до {{ max }}',
                         min: 1,
                         max: 10000
                     )

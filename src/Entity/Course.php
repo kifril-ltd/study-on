@@ -11,7 +11,6 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 #[ORM\Entity(repositoryClass: CourseRepository::class)]
 #[UniqueEntity(
     fields: ['code'],
-    message: 'Данный код уже используется в системе',
 )]
 class Course
 {

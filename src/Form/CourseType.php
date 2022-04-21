@@ -19,22 +19,22 @@ class CourseType extends AbstractType
             ->add('code', TextType::class, [
                 'label' => 'Код курса',
                 'constraints' => [
-                    new NotBlank(message: 'Поле код курса является обязательным'),
-                    new Length(max: 255, maxMessage: 'Код курса должно быть не более 255 символов')
+                    new NotBlank(),
+                    new Length(max: 255)
                 ],
             ])
             ->add('name', TextType::class, [
                 'label' => 'Название',
                 'constraints' => [
-                    new NotBlank(message: 'Поле название является обязательным'),
-                    new Length(max: 255, maxMessage: 'Название должно быть не более 255 символов')
+                    new NotBlank(),
+                    new Length(max: 255)
                 ],
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Описание',
                 'required' => false,
                 'constraints' => [
-                    new Length(max: 1000, maxMessage: 'Код курса должно быть не более 1000 символов')
+                    new Length(max: 1000)
                 ],
             ])
         ;
