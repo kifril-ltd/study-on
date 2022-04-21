@@ -25,10 +25,6 @@ class Lesson
     private $content;
 
     #[ORM\Column(type: 'integer')]
-    #[Assert\Range(
-        min: 0,
-        max: 10000,
-    )]
     private $number;
 
     public function getId(): ?int
