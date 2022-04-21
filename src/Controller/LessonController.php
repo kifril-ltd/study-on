@@ -14,26 +14,6 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/lessons')]
 class LessonController extends AbstractController
 {
-    #[Route('/new/{course}', name: 'app_lesson_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, LessonRepository $lessonRepository, Course $course): Response
-    {
-        $lesson = new Lesson();
-        $lesson->setCourse($course);
-        $form = $this->createForm(LessonType::class, $lesson);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $lessonRepository->add($lesson);
-            return $this->redirectToRoute('app_course_show', ['id' => $course->getId()], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->renderForm('lesson/new.html.twig', [
-            'lesson' => $lesson,
-            'form' => $form,
-            'course' => $course,
-        ]);
-    }
-
     #[Route('/{id}', name: 'app_lesson_show', methods: ['GET'])]
     public function show(Lesson $lesson): Response
     {
@@ -50,7 +30,11 @@ class LessonController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $lessonRepository->add($lesson);
-            return $this->redirectToRoute('app_lesson_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute(
+                'app_course_show',
+                ['id' => $lesson->getCourse()->getId()],
+                Response::HTTP_SEE_OTHER
+            );
         }
 
         return $this->renderForm('lesson/edit.html.twig', [
