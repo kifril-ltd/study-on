@@ -5,20 +5,20 @@
 {% block body %}
     <table class="table">
         <tbody>
-            <tr>
-                <th>Название</th>
-                <td>{{ course.name }}</td>
-            </tr>
-            <tr>
-                <th>Описание</th>
-                <td>{{ course.description }}</td>
-            </tr>
+        <tr>
+            <th>Название</th>
+            <td>{{ course.name }}</td>
+        </tr>
+        <tr>
+            <th>Описание</th>
+            <td>{{ course.description }}</td>
+        </tr>
         </tbody>
     </table>
 
     <h2>Уроки</h2>
     <ol>
-        {% for lesson in course.lessons|sort((a, b) => a.number <=> b.number)%}
+        {% for lesson in course.lessons %}
             <li><a href="{{ path('app_lesson_show', {'id': lesson.id}) }}">{{ lesson.name }}</a></li>
         {% else %}
             <div>Список пуст!</div>

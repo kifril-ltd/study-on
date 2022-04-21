@@ -30,6 +30,7 @@ class Course
     private $description;
 
     #[ORM\OneToMany(mappedBy: 'course', targetEntity: Lesson::class, cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OrderBy(["number" => "ASC"])]
     private $lessons;
 
     public function __construct()
