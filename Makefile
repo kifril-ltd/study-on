@@ -22,6 +22,12 @@ migrate:
 fixtload:
 	@${CONSOLE} doctrine:fixtures:load
 
+req:
+    @${COMPOSER} req
+
+req-dev:
+    @${COMPOSER} req --dev
+
 # В файл local.mk можно добавлять дополнительные make-команды,
 # которые требуются лично вам, но не нужны на проекте в целом
 -include local.mk
