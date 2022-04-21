@@ -10,6 +10,12 @@ up:
 down:
 	@${COMPOSE} down
 
+encore_dev:
+	@${COMPOSE} --env-file .env.local run node yarn encore dev
+
+encore_prod:
+	@${COMPOSE} --env-file .env.local run node yarn encore production
+
 clear:
 	@${CONSOLE} cache:clear
 
@@ -23,10 +29,12 @@ fixtload:
 	@${CONSOLE} doctrine:fixtures:load
 
 req:
-    @${COMPOSER} req
+	@${COMPOSER} req
 
 req-dev:
-    @${COMPOSER} req --dev
+	@${COMPOSER} req --dev
+
+
 
 # В файл local.mk можно добавлять дополнительные make-команды,
 # которые требуются лично вам, но не нужны на проекте в целом
