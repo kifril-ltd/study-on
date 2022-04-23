@@ -2,10 +2,20 @@
 
 {% block title %} Добавление курса / StudyOn{% endblock %}
 
+{% block actions %}
+    <div class="d-flex">
+        <a class="btn btn-info mx-1" href="{{ path('app_course_index') }}">Вернуться к списку курсов</a>
+    </div>
+{% endblock %}
+
 {% block body %}
-    <h1>Добавить новый курс</h1>
 
-    {{ include('course/_form.html.twig') }}
-
-    <a href="{{ path('app_course_index') }}">К списку курсов</a>
+    <div class="card my-2">
+        <div class="card-header">
+            Добавление нового курса
+        </div>
+        <div class="card-body d-flex flex-column justify-content-between">
+            {{ include('course/_form.html.twig') }}
+        </div>
+    </div>
 {% endblock %}

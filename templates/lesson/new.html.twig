@@ -2,10 +2,23 @@
 
 {% block title %}Добавление / {{ lesson.course.name }} / StudyOn{% endblock %}
 
+{% block actions %}
+    <div class="d-flex">
+        <a class="btn btn-info mx-1" href="{{ path('app_course_show', {'id': lesson.course.id}) }}">
+            Вернуться к курсу
+        </a>
+    </div>
+{% endblock %}
+
 {% block body %}
-    <h1>Добавить новый урок</h1>
 
-    {{ include('lesson/_form.html.twig') }}
+    <div class="card my-2">
+        <div class="card-header">
+            Добавление нового урока
+        </div>
+        <div class="card-body d-flex flex-column justify-content-between">
+            {{ include('lesson/_form.html.twig') }}
+        </div>
+    </div>
 
-    <a href="{{ path('app_course_show', {'id': course.id}) }}">Обратно к курсу</a>
 {% endblock %}
