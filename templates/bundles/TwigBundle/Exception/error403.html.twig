@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="error-template">
+                <h1>
+                    Уупс!</h1>
+                <h2>
+                    403 forbidden</h2>
+                <div class="error-details">
+                    Извините, у вас нет доступа к данной странице!
+                </div>
+                <div class="error-actions">
+                    <a href="{{ path('app_course_index') }}" class="btn btn-primary btn-lg">
+                        Вернуться на главную
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
