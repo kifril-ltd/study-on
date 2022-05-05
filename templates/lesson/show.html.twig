@@ -4,7 +4,7 @@
 
 {% block actions %}
     <div class="d-flex">
-        <a class="btn btn-primary mx-1" href="{{ path('app_lesson_edit', {'id': lesson.id}) }}">Редактировать урок</a>
+        <a class="btn btn-primary mx-1 lesson-edit" href="{{ path('app_lesson_edit', {'id': lesson.id}) }}">Редактировать урок</a>
 
         {{ include('lesson/_delete_form.html.twig') }}
     </div>

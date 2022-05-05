@@ -36,6 +36,9 @@ class LessonType extends AbstractType
             ])
             ->add('content', TextareaType::class, [
                 'label' => 'Контент',
+                'constraints' => [
+                    new NotBlank(),
+                ],
             ])
             ->add('number', NumberType::class, [
                 'label' => 'Порядковый номер',
