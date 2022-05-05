@@ -68,7 +68,7 @@ class LessonControllerTest extends AbstractTest
         $this->assertResponseOk();
     }
 
-    public function testCourseCreationWithBlankFields(): void
+    public function testLessonCreationWithBlankFields(): void
     {
         $client = self::getClient();
 
@@ -117,7 +117,7 @@ class LessonControllerTest extends AbstractTest
         self::assertEquals('Значение не должно быть пустым.', $error->text());
     }
 
-    public function testCourseCreationWithInvalidLengthFields(): void
+    public function testLessonCreationWithInvalidLengthFields(): void
     {
         $client = self::getClient();
 
@@ -184,7 +184,7 @@ class LessonControllerTest extends AbstractTest
         }
     }
 
-    public function testLessonsDelete(): void
+    public function testLessonDelete(): void
     {
         $client = self::getClient();
 
