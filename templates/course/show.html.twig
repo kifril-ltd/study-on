@@ -4,7 +4,7 @@
 
 {% block actions %}
     <div class="d-flex">
-        <a class="btn btn-primary mx-1" href="{{ path('app_course_edit', {'id': course.id}) }}">Редактировать курс</a>
+        <a class="btn btn-primary mx-1 course-edit" href="{{ path('app_course_edit', {'id': course.id}) }}">Редактировать курс</a>
         <a class="btn btn-success mx-1" href="{{ path('app_course_add_lesson', {'course': course.id}) }}">Добавить урок</a>
         {{ include('course/_delete_form.html.twig') }}
         <a class="btn btn-info mx-1" href="{{ path('app_course_index') }}">Вернуться к списку курсов</a>
