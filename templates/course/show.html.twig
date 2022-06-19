@@ -1,12 +1,14 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ course.name }} / StudyOn{% endblock %}
+{% block title %} {{ course.name }} / StudyOn{% endblock %}
 
 {% block actions %}
     <div class="d-flex">
+        {% if is_granted('ROLE_SUPER_ADMIN') %}
         <a class="btn btn-primary mx-1 course-edit" href="{{ path('app_course_edit', {'id': course.id}) }}">Редактировать курс</a>
         <a class="btn btn-success mx-1 lesson-add" href="{{ path('app_course_add_lesson', {'course': course.id}) }}">Добавить урок</a>
         {{ include('course/_delete_form.html.twig') }}
+        {% endif %}
         <a class="btn btn-info mx-1" href="{{ path('app_course_index') }}">Вернуться к списку курсов</a>
     </div>
 {% endblock %}

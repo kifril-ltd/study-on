@@ -1,6 +1,10 @@
 version: "3.1"
 volumes:
   postgres: ~
+networks:
+  default:
+    external:
+      name: billing_study_on
 services:
   nginx:
     container_name: ${APP_NAME}_nginx

@@ -63,7 +63,7 @@ class CourseControllerTest extends AbstractTest
     public function urlProviderNotFound()
     {
         yield ['/course/'];
-        yield ['/courses/10'];
+        yield ['/courses/-1'];
     }
 
     public function testPagesPostResponseIsSuccessful(): void

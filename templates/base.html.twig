@@ -23,6 +23,17 @@
         </a>
         {% block actions %}
         {% endblock %}
+
+        {% if app.user %}
+            <div class="">
+                Привет, {{ app.user.email }}
+                <a class="btn btn-outline-success" href="{{ path('app_profile') }}">Профиль</a>
+                <a class="btn btn-danger" href="{{ path('app_logout') }}">Выйти</a>
+            </div>
+        {% else %}
+                <a class="btn btn-primary" href="{{ path('app_login') }}">Войти</a>
+{#                <a class="btn btn-outline-primary" href="{{ path('') }}">Регистрация</a>#}
+        {% endif %}
     </div>
 </nav>
 
