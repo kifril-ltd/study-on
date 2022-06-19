@@ -2,12 +2,14 @@
 
 namespace App\Security;
 
+use App\Exception\BillingUnavailableException;
 use App\Service\BillingClient;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Http\Authenticator\AbstractLoginFormAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
@@ -48,9 +50,13 @@ class BillingAuthenticator extends AbstractLoginFormAuthenticator
         ];
 
         $credentials = json_encode($credentials);
-        $passport =  new SelfValidatingPassport(
+        $passport = new SelfValidatingPassport(
             new UserBadge($credentials, function ($credentials) {
-                return $this->billingClient->auth($credentials);
+                try {
+                    $user = $this->billingClient->auth($credentials);
+                } catch (BillingUnavailableException $exception) {
+
+                }
             }),
             [
                 new CsrfTokenBadge('authenticate', $request->request->get('_csrf_token')),
@@ -66,7 +72,6 @@ class BillingAuthenticator extends AbstractLoginFormAuthenticator
             return new RedirectResponse($targetPath);
         }
 
-        // For example:
         return new RedirectResponse($this->urlGenerator->generate('app_course_index'));
     }
 

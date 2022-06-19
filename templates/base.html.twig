@@ -21,18 +21,21 @@
         <a class="navbar-brand mx-5" href="{{ path('app_course_index') }}">
             <h3>StudyOn</h3>
         </a>
+
         {% block actions %}
         {% endblock %}
 
         {% if app.user %}
-            <div class="">
+            <div>
                 Привет, {{ app.user.email }}
                 <a class="btn btn-outline-success" href="{{ path('app_profile') }}">Профиль</a>
                 <a class="btn btn-danger" href="{{ path('app_logout') }}">Выйти</a>
             </div>
         {% else %}
+            <div>
                 <a class="btn btn-primary" href="{{ path('app_login') }}">Войти</a>
-{#                <a class="btn btn-outline-primary" href="{{ path('') }}">Регистрация</a>#}
+                <a class="btn btn-outline-primary" href="{{ path('app_register') }}">Регистрация</a>
+            </div>
         {% endif %}
     </div>
 </nav>

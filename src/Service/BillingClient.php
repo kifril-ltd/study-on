@@ -5,8 +5,10 @@ namespace App\Service;
 use App\Dto\Response\CurrentUserDto;
 use App\Dto\Response\Transformer\UserAuthDtoTransformer;
 use App\Dto\Response\UserAuthDto;
+use App\Exception\BillingException;
 use App\Exception\BillingUnavailableException;
 use JMS\Serializer\SerializerInterface;
+use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 
 class BillingClient
 {
@@ -21,58 +23,56 @@ class BillingClient
 
     public function auth($credentials)
     {
-        $query = curl_init($this->apiUrl . '/api/v1/auth');
-        $options = [
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $credentials,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Content-Length: ' . strlen($credentials),
-            ]
-        ];
-        curl_setopt_array($query, $options);
-        $response = curl_exec($query);
 
-        if ($response === false) {
-            throw new BillingUnavailableException('Ошибка на стороне сервиса авторизации');
-        }
-        curl_close($query);
+        $api = new ApiService('/api/v1/auth', 'POST', json_decode($credentials, true));
+        $response = $api->exec();
 
         $result = json_decode($response, true);
         if (isset($result['code'])) {
             if ($result['code'] === 401) {
-                throw new BillingUnavailableException('Проверьте правильность введённого логина и пароля');
+                throw new UserNotFoundException('Проверьте правильность введённого логина и пароля');
             }
         }
 
         $userDto = $this->serializer->deserialize($response, UserAuthDto::class, 'json');
-        $user = (new UserAuthDtoTransformer())->transformToObject($userDto);
 
-        return $user;
+        return (new UserAuthDtoTransformer())->transformToObject($userDto);
     }
 
-    public function getUser($token) {
-        $query = curl_init($this->apiUrl . '/api/v1/users/current');
-        $options = [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => [
+    public function getUser($token)
+    {
+        $api = new ApiService(
+            '/api/v1/users/current',
+            'GET',
+            null,
+            null,
+            [
                 'Accept: application/json',
                 'Authorization: Bearer ' . $token
             ]
-        ];
-        curl_setopt_array($query, $options);
-        $response = curl_exec($query);
-        if ($response === false) {
-            throw new BillingUnavailableException('Ошибка на стороне сервиса авторизации');
-        }
-        curl_close($query);
+        );
+        $response = $api->exec();
 
         $result = json_decode($response, true);
         if (isset($result['errors'])) {
-            throw new BillingUnavailableException('Ошибка на стороне сервера.');
+            throw new BillingException(json_encode($result['errors']));
         }
 
         return $this->serializer->deserialize($response, CurrentUserDto::class, 'json');
+    }
+
+    public function register($registerRequest)
+    {
+        $api = new ApiService('/api/v1/register', 'POST', $registerRequest);
+        $response = $api->exec();
+
+        $result = json_decode($response, true);
+        if (isset($result['errors'])) {
+            throw new BillingException(json_encode($result['errors']));
+        }
+
+        $userDto = $this->serializer->deserialize($response, UserAuthDto::class, 'json');
+
+        return (new UserAuthDtoTransformer())->transformToObject($userDto);
     }
 }
