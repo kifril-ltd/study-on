@@ -8,13 +8,21 @@ class ApiService
 {
     private string $route;
     private array $options;
+    private string $exceptionMessage;
 
-    public function __construct(string $route, string $method, $postParams = null, $getParams = null, $headers = null)
+    public function __construct(
+        string $route,
+        string $method,
+        $postParams = null,
+        $getParams = null,
+        $headers = null,
+        $exceptionMessage = 'Сервис авторизации недоступен')
     {
         $this->route = $_ENV['BILLING_URL'] . $route;
         $this->options = [
             CURLOPT_RETURNTRANSFER => true,
         ];
+
         if ($method === 'POST') {
             $this->options[CURLOPT_POST] = true;
             $this->options[CURLOPT_HTTPHEADER] = [
@@ -28,10 +36,13 @@ class ApiService
                 $this->route .= '?' . http_build_query($getParams);
             }
         }
+
         if ($headers !== null) {
             $this->options[CURLOPT_HTTPHEADER] = [];
             array_push($this->options[CURLOPT_HTTPHEADER], ...$headers);
         }
+
+        $this->exceptionMessage = $exceptionMessage;
     }
 
     public function exec()
@@ -41,7 +52,7 @@ class ApiService
         $response = curl_exec($query);
 
         if ($response === false) {
-            throw new BillingUnavailableException('Ошибка на стороне сервиса авторизации');
+            throw new BillingUnavailableException($this->exceptionMessage);
         }
         curl_close($query);
         return $response;

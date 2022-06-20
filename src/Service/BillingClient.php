@@ -12,19 +12,23 @@ use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 
 class BillingClient
 {
-    private string $apiUrl;
     private $serializer;
 
     public function __construct(SerializerInterface $serializer)
     {
-        $this->apiUrl = $_ENV['BILLING_URL'];
         $this->serializer = $serializer;
     }
 
     public function auth($credentials)
     {
 
-        $api = new ApiService('/api/v1/auth', 'POST', json_decode($credentials, true));
+        $api = new ApiService(
+            '/api/v1/auth',
+            'POST',
+            json_decode($credentials, true),
+            null,
+            null,
+            'Сервис авторизации недоступен. Попробуйте авторизоваться позже.');
         $response = $api->exec();
 
         $result = json_decode($response, true);
@@ -49,7 +53,8 @@ class BillingClient
             [
                 'Accept: application/json',
                 'Authorization: Bearer ' . $token
-            ]
+            ],
+            'Сервис биллинга недоступен.'
         );
         $response = $api->exec();
 
@@ -63,7 +68,13 @@ class BillingClient
 
     public function register($registerRequest)
     {
-        $api = new ApiService('/api/v1/register', 'POST', $registerRequest);
+        $api = new ApiService(
+            '/api/v1/register',
+            'POST',
+            $registerRequest,
+            null,
+            null,
+            'Сервис регистрации недоступен. Попробуйте зарегистрироваться позже.');
         $response = $api->exec();
 
         $result = json_decode($response, true);

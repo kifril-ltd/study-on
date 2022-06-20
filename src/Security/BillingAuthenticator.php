@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Http\Authenticator\AbstractLoginFormAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
@@ -55,8 +56,9 @@ class BillingAuthenticator extends AbstractLoginFormAuthenticator
                 try {
                     $user = $this->billingClient->auth($credentials);
                 } catch (BillingUnavailableException $exception) {
-
+                    throw new CustomUserMessageAuthenticationException($exception->getMessage());
                 }
+                return $user;
             }),
             [
                 new CsrfTokenBadge('authenticate', $request->request->get('_csrf_token')),
