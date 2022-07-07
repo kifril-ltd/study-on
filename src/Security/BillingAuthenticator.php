@@ -41,12 +41,12 @@ class BillingAuthenticator extends AbstractLoginFormAuthenticator
 
     public function authenticate(Request $request): Passport
     {
-        $email = $request->request->get('email', '');
+        $username = $request->request->get('username', '');
         $password = $request->request->get('password', '');
-        $request->getSession()->set(Security::LAST_USERNAME, $email);
+        $request->getSession()->set(Security::LAST_USERNAME, $username);
 
         $credentials = [
-            'username' => $email,
+            'username' => $username,
             'password' => $password,
         ];
 

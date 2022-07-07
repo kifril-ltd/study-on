@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{% endblock %}
+
+{% block body %}
+
+    <table class="table">
+        <thead>
+        <tr>
+            <td>#</td>
+            <td>Дата</td>
+            <td>Тип операции</td>
+            <td>Сумма</td>
+        </tr>
+        </thead>
+        {% for transaction in transactions %}
+            {% if transaction.type == 'payment' %}
+                <tr class="table-danger">
+            {% else %}
+                <tr class="table-success">
+            {% endif %}
+            <td>{{ loop.index }}</td>
+            <td>{{ transaction.created_at|date('d.m.Y H:m:s') }}</td>
+            <td>
+            {% if transaction.type == 'payment' %}
+                Списание
+            {% else %}
+                Пополнение
+            {% endif %}
+            </td>
+            <td>{{ transaction.amount }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+
+{% endblock %}

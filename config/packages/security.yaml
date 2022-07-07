@@ -34,11 +34,13 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
          - { path: ^/profile, roles: [IS_AUTHENTICATED_FULLY] }
+         - { path: ^/history, roles: [IS_AUTHENTICATED_FULLY] }
          - { path: ^/lessons/\d+$, roles: ROLE_USER }
          - { path: ^/(courses|lessons)/\d+/edit$, roles: [ROLE_SUPER_ADMIN] }
          - { path: ^/courses/\d+/lessons/add$, roles: [ROLE_SUPER_ADMIN] }
          - { path: ^/(courses|lessons)/\d+$, methods: [POST], roles: [ROLE_SUPER_ADMIN] }
          - { path: ^/courses/new$, roles: [ROLE_SUPER_ADMIN] }
+         - { path: ^/logout, roles: [PUBLIC_ACCESS] }
 
 when@test:
     security:

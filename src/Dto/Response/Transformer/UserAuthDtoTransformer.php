@@ -2,12 +2,12 @@
 
 namespace App\Dto\Response\Transformer;
 
-use App\Dto\Response\UserAuthDto;
+use App\Dto\Response\UserAuthResponseDto;
 use App\Security\User;
 
 class UserAuthDtoTransformer
 {
-    public function transformToObject(UserAuthDto $userAuthDto)
+    public function transformToObject(UserAuthResponseDto $userAuthDto)
     {
         $user = new User();
         $user->setApiToken($userAuthDto->token);

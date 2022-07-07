@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Tests;
+namespace App\Tests\Controller;
 
 use App\DataFixtures\CourseFixtures;
 use App\Entity\Course;
+use App\Tests\AbstractTest;
 
 class LessonControllerTest extends AbstractTest
 {

@@ -1,14 +1,34 @@
 <?php
 
-namespace App\Tests;
+namespace App\Tests\Controller;
 
 use App\DataFixtures\CourseFixtures;
 use App\Entity\Course;
-use App\Repository\CourseRepository;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Tests\AbstractTest;
+use App\Tests\Authentication\AuthTest;
+use JMS\Serializer\SerializerInterface;
+use function App\Tests\count;
 
 class CourseControllerTest extends AbstractTest
 {
+    private $userAuthData = [
+        'username' => 'user@study-on.local',
+        'password' => 'Qwerty123'
+    ];
+
+    private $adminAuthData = [
+        'username' => 'admin@study-on.local',
+        'password' => 'Qwerty123'
+    ];
+
+    private SerializerInterface $serializer;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->serializer = self::getContainer()->get(SerializerInterface::class);
+    }
+
     protected function getFixtures(): array
     {
         return [CourseFixtures::class];
@@ -19,6 +39,12 @@ class CourseControllerTest extends AbstractTest
      */
     public function testMainPagesGetResponseIsSuccessful($url): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
         $client->request('GET', $url);
         $this->assertResponseOk();
@@ -33,6 +59,12 @@ class CourseControllerTest extends AbstractTest
 
     public function testParametrisePagesGetResponseIsSuccessful(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $courseRepository = self::getEntityManager()->getRepository(Course::class);
@@ -68,6 +100,12 @@ class CourseControllerTest extends AbstractTest
 
     public function testPagesPostResponseIsSuccessful(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $client->request('POST', 'courses/new');
@@ -87,6 +125,12 @@ class CourseControllerTest extends AbstractTest
 
     public function testCoursesCount(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $crawler = $client->request('GET', '/courses/');
@@ -99,13 +143,44 @@ class CourseControllerTest extends AbstractTest
         self::assertCount($actualCoursesCount, $crawler->filter('.course-card'));
     }
 
+    public function testFreeCoursesAccess(): void
+    {
+        $client = self::getClient();
+
+        $crawler = $client->request('GET', '/courses/');
+
+        $actualFreeCoursesCount = 3;
+
+        self::assertCount(3, $crawler->filter('.course-card'));
+
+        $freeCoursesCodes = ['PPBIB', 'MSCB', 'CAMPB'];
+        $courseRepository = self::getEntityManager()->getRepository(Course::class);
+        $freeCourses = [];
+        foreach ($freeCoursesCodes as $code) {
+            $freeCourses[] = $courseRepository->findOneBy(['code' => $code]);
+        }
+
+        foreach ($freeCourses as $course) {
+            $crawler = $client->request('GET', '/courses/' . $course->getId());
+            $this->assertResponseOk();
+        }
+    }
+
     public function testCourseLessonsCount(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->userAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $courseRepository = self::getEntityManager()->getRepository(Course::class);
         $courses = $courseRepository->findAll();
         self::assertNotEmpty($courses);
+
+        $userCoursesCodes = [''];
 
         foreach ($courses as $course) {
             $crawler = $client->request('GET', '/courses/' . $course->getId());

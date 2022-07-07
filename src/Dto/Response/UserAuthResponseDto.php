@@ -4,7 +4,7 @@ namespace App\Dto\Response;
 
 use JMS\Serializer\Annotation as Serializer;
 
-class UserAuthDto
+class UserAuthResponseDto
 {
 
     #[Serializer\Type("string")]

@@ -4,11 +4,15 @@ namespace App\Controller;
 
 use App\Entity\Course;
 use App\Entity\Lesson;
+use App\Exception\BillingException;
 use App\Form\CourseType;
 use App\Form\LessonType;
 use App\Repository\CourseRepository;
 use App\Repository\LessonRepository;
+use App\Service\BillingClient;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Finder\Exception\AccessDeniedException;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -17,11 +21,57 @@ use Symfony\Component\Routing\Annotation\Route;
 class CourseController extends AbstractController
 {
     #[Route('/', name: 'app_course_index', methods: ['GET'])]
-    public function index(CourseRepository $courseRepository): Response
+    public function index(CourseRepository $courseRepository, BillingClient $billingClient): Response
     {
+        $billingCourses = $billingClient->getAllCourses(['type' => 'free']);
+        $localCourses = $courseRepository->findAllAsArray();
+
+        $billingCourses = $this->array_field_to_key($billingCourses, 'code');
+        $localCourses = $this->array_field_to_key($localCourses, 'code');
+
+        if (!$this->getUser()) {
+            $freeCourses = [];
+            foreach ($localCourses as $code => $course) {
+                if (!isset($billingCourses[$code]) || $billingCourses[$code]['type'] === 'free') {
+                    $freeCourses[] = [
+                        'course' => $course,
+                        'billingInfo' => ['type' => $billingCourses[$code]['type']],
+                        'transaction' => null
+                    ];
+                }
+            }
+            return $this->render('course/index.html.twig', [
+                'courses' => $freeCourses,
+            ]);
+        }
+
+        $apiToken = $this->getUser()->getApiToken();
+
+        $transactions = $billingClient->getTransactions(['type' => 'payment', 'skip_expired' => true], $apiToken);
+
+        $transactions = $this->array_field_to_key($transactions, 'course_code');
+
+        $courses = [];
+        foreach ($localCourses as $code => $course) {
+            $courses[] = [
+                'course' => $course,
+                'billingInfo' => $billingCourses[$code],
+                'transaction' => $transactions[$code] ?? null
+            ];
+        }
+
         return $this->render('course/index.html.twig', [
-            'courses' => $courseRepository->findAll(),
+            'courses' => $courses,
         ]);
+    }
+
+    private function array_field_to_key($array, $key)
+    {
+        $arrayOut = [];
+        foreach ($array as $obj) {
+            $arrayOut[$obj[$key]] = $obj;
+        }
+        return $arrayOut;
     }
 
     #[Route('/new', name: 'app_course_new', methods: ['GET', 'POST'])]
@@ -42,12 +92,46 @@ class CourseController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_course_show', methods: ['GET'])]
-    public function show(Course $course): Response
+    #[Route('/{id}/pay', name: 'app_course_pay', methods: ['GET'])]
+    public function pay(Course $course, BillingClient $billingClient): Response
     {
-        return $this->render('course/show.html.twig', [
-            'course' => $course,
-        ]);
+        if (!$this->getUser()) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $apiToken = $this->getUser()->getApiToken();
+
+        $payResponse = $billingClient->pay($course->getCode(), $apiToken);
+
+        return $this->redirectToRoute('app_course_index');
+    }
+
+    #[Route('/{id}', name: 'app_course_show', methods: ['GET'])]
+    public function show(Course $course, BillingClient $billingClient): Response
+    {
+        $billingCourse = $billingClient->getCourseByCode($course->getCode());
+
+        if ($billingCourse['type'] === 'free') {
+            return $this->render('course/show.html.twig', [
+                'course' => $course,
+            ]);
+        }
+
+        if (!$this->getUser()) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $apiToken = $this->getUser()->getApiToken();
+        $transaction = $billingClient->getTransactions(
+            ['course_code' => $course->getCode(), 'skip_expired' => true],
+            $apiToken
+        );
+        if ($transaction) {
+            return $this->render('course/show.html.twig', [
+                'course' => $course,
+            ]);
+        }
+        throw new \Exception('Данный курс вам недоступен!');
     }
 
     #[Route('/{id}/edit', name: 'app_course_edit', methods: ['GET', 'POST'])]
