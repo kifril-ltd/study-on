@@ -11,10 +11,10 @@
 {% block body %}
     <h1>Список курсов</h1>
 
-    {% if error is defined%}
-    <div class="alert alert-danger" role="alert">
-        {{ error }}
-    </div>
+    {% if error is defined %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
     {% endif %}
 
     <div class="d-flex justify-content-between align-items-stretch flex-wrap">
@@ -30,7 +30,11 @@
                            class="btn btn-primary course-link">Перейти
                             к курсу</a>
                     {% elseif course.billingInfo.type == 'rent' %}
-                        {% if course.transaction %}
+                        {% if is_granted('ROLE_SUPER_ADMIN') %}
+                            <a href="{{ path('app_course_show', {'id': course.course.id}) }}"
+                               class="btn btn-primary course-link">Перейти
+                                к курсу</a>
+                        {% elseif course.transaction %}
                             <div class="alert alert-info" role="alert">
                                 Арендован до {{ course.transaction.expires_at|date("d.m.Y") }}
                             </div>
@@ -38,10 +42,16 @@
                                class="btn btn-primary course-link">Перейти
                                 к курсу</a>
                         {% else %}
-                            <a  class="btn btn-success course-link" data-bs-toggle="modal" data-bs-target="#buyModal-{{course.course.id}}">Арендовать за {{ course.billingInfo.price }}</a>
+                            <a class="btn btn-success course-link" data-bs-toggle="modal"
+                               data-bs-target="#buyModal-{{ course.course.id }}">Арендовать
+                                за {{ course.billingInfo.price }}</a>
                         {% endif %}
                     {% elseif course.billingInfo.type == 'buy' %}
-                        {% if course.transaction %}
+                        {% if is_granted('ROLE_SUPER_ADMIN') %}
+                            <a href="{{ path('app_course_show', {'id': course.course.id}) }}"
+                               class="btn btn-primary course-link">Перейти
+                                к курсу</a>
+                        {% elseif course.transaction %}
                             <div class="alert alert-info" role="alert">
                                 Куплен
                             </div>
@@ -49,7 +59,9 @@
                                class="btn btn-primary course-link">Перейти
                                 к курсу</a>
                         {% else %}
-                            <a  class="btn btn-success course-link" data-bs-toggle="modal" data-bs-target="#buyModal-{{course.course.id}}">Купить за {{ course.billingInfo.price }}</a>
+                            <a class="btn btn-success course-link" data-bs-toggle="modal"
+                               data-bs-target="#buyModal-{{ course.course.id }}">Купить
+                                за {{ course.billingInfo.price }}</a>
                         {% endif %}
                     {% endif %}
                 </div>
