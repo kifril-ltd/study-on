@@ -18,9 +18,11 @@ security:
             custom_authenticator: App\Security\BillingAuthenticator
             logout:
                 path: app_logout
-            remember_me:
-                secret: '%kernel.secret%' # required
-                lifetime: 3600 # 1 week in seconds
+                target: /
+                invalidate_session: true
+#            remember_me:
+#                secret: '%kernel.secret%' # required
+#                lifetime: 3600 # 1 week in seconds
                 # where to redirect after logout
                 # target: app_any_route
 
@@ -40,7 +42,7 @@ security:
          - { path: ^/courses/\d+/lessons/add$, roles: [ROLE_SUPER_ADMIN] }
          - { path: ^/(courses|lessons)/\d+$, methods: [POST], roles: [ROLE_SUPER_ADMIN] }
          - { path: ^/courses/new$, roles: [ROLE_SUPER_ADMIN] }
-         - { path: ^/logout, roles: [PUBLIC_ACCESS] }
+         - { path: ^/logout, roles: [IS_AUTHENTICATED_FULLY] }
 
 when@test:
     security:

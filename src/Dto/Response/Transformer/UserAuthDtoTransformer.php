@@ -11,6 +11,7 @@ class UserAuthDtoTransformer
     {
         $user = new User();
         $user->setApiToken($userAuthDto->token);
+        $user->setRefreshToken($userAuthDto->refreshToken);
 
         $decodedJwt = $this->jwtDecode($userAuthDto->token);
         $user->setRoles($decodedJwt['roles']);

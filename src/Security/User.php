@@ -13,6 +13,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     private $apiToken;
 
+    private $refreshToken;
+
     private $password;
 
     public function getEmail(): ?string
@@ -86,5 +88,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->password = $password;
         return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRefreshToken()
+    {
+        return $this->refreshToken;
+    }
+
+    /**
+     * @param mixed $refreshToken
+     */
+    public function setRefreshToken($refreshToken): void
+    {
+        $this->refreshToken = $refreshToken;
     }
 }

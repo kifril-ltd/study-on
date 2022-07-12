@@ -54,18 +54,25 @@ class SecurityController extends AbstractController
         $form = $this->createForm(RegisterType::class, $registerRequest);
         $form->handleRequest($request);
 
+        if ($request->get('errors')) {
+            return $this->render('security/registration.html.twig', [
+                'form' => $form->createView(),
+                'errors' => $request->get('errors'),
+            ]);
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
             try {
                 $user = $billingClient->register($registerRequest);
             } catch (BillingException $e) {
-                return $this->render('security/registration.html.twig', [
-                    'form' => $form->createView(),
-                    'errors' => json_decode($e->getMessage(), true),
+                return $this->redirectToRoute('app_register', [
+                    'form' => $form,
+                    'errors' => json_decode($e->getMessage(), true)
                 ]);
             } catch (BillingUnavailableException $e) {
-                return $this->render('security/registration.html.twig', [
-                    'form' => $form->createView(),
-                    'errors' => ['billing' => [$e->getMessage()]],
+                return $this->redirectToRoute('app_register', [
+                    'form' => $form,
+                    'errors' => ['billing' => [$e->getMessage()]]
                 ]);
             }
 

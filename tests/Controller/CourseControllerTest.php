@@ -4,9 +4,14 @@ namespace App\Tests\Controller;
 
 use App\DataFixtures\CourseFixtures;
 use App\Entity\Course;
+use App\Repository\CourseRepository;
+use App\Service\BillingClient;
 use App\Tests\AbstractTest;
 use App\Tests\Authentication\AuthTest;
+use App\Tests\Mock\BillingClientMock;
 use JMS\Serializer\SerializerInterface;
+use Symfony\Component\HttpFoundation\Response;
+
 use function App\Tests\count;
 
 class CourseControllerTest extends AbstractTest
@@ -34,6 +39,16 @@ class CourseControllerTest extends AbstractTest
         return [CourseFixtures::class];
     }
 
+    private function mockBillingClient()
+    {
+        self::getClient()->disableReboot();
+
+        self::getClient()->getContainer()->set(
+            BillingClient::class,
+            new BillingClientMock($this->serializer)
+        );
+    }
+
     /**
      * @dataProvider urlProviderSuccessful
      */
@@ -45,8 +60,7 @@ class CourseControllerTest extends AbstractTest
         $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
         $crawler = $auth->auth($authRequest);
 
-        $client = self::getClient();
-        $client->request('GET', $url);
+        self::getClient()->request('GET', $url);
         $this->assertResponseOk();
     }
 
@@ -70,9 +84,14 @@ class CourseControllerTest extends AbstractTest
         $courseRepository = self::getEntityManager()->getRepository(Course::class);
 
         $courses = $courseRepository->findAll();
+
         foreach ($courses as $course) {
             $client->request('GET', '/courses/' . $course->getId());
-            $this->assertResponseOk();
+            if ($course->getCode() === 'PPBIB' || $course->getCode() === 'MSCB' || $course->getCode() === 'CAMPB') {
+                $this->assertResponseOk();
+            } else {
+                $this->assertResponseCode(Response::HTTP_NOT_ACCEPTABLE, $client->getResponse());
+            }
 
             $client->request('GET', '/courses/' . $course->getId() . '/edit');
             $this->assertResponseOk();
@@ -108,22 +127,48 @@ class CourseControllerTest extends AbstractTest
 
         $client = self::getClient();
 
-        $client->request('POST', 'courses/new');
+        self::getClient()->request('POST', '/courses/new');
         $this->assertResponseOk();
 
         $courseRepository = self::getEntityManager()->getRepository(Course::class);
         $courses = $courseRepository->findAll();
 
         foreach ($courses as $course) {
-            $client->request('POST', '/courses/' . $course->getId() . '/edit');
+            self::getClient()->request('POST', '/courses/' . $course->getId() . '/edit');
             $this->assertResponseOk();
 
-            $client->request('POST', '/courses/' . $course->getId() . '/lessons/add');
+            self::getClient()->request('POST', '/courses/' . $course->getId() . '/lessons/add');
             $this->assertResponseOk();
         }
     }
 
-    public function testCoursesCount(): void
+    public function testPagesAccessByRole()
+    {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->userAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
+        $client = self::getClient();
+
+        $client->request('POST', '/courses/new');
+        $this->assertResponseCode(Response::HTTP_FORBIDDEN, $client->getResponse());
+
+        $courseRepository = self::getEntityManager()->getRepository(Course::class);
+        $courses = $courseRepository->findAll();
+
+        foreach ($courses as $course) {
+            $client->request('POST', '/courses/' . $course->getId() . '/edit');
+            $this->assertResponseCode(Response::HTTP_FORBIDDEN, $client->getResponse());
+
+            $client->request('POST', '/courses/' . $course->getId() . '/lessons/add');
+            $this->assertResponseCode(Response::HTTP_FORBIDDEN, $client->getResponse());
+        }
+    }
+
+
+    public function testCoursesCountAuthorizedUser(): void
     {
         $auth = new AuthTest();
         $auth->setSerializer($this->serializer);
@@ -135,21 +180,15 @@ class CourseControllerTest extends AbstractTest
 
         $crawler = $client->request('GET', '/courses/');
 
-        $courseRepository = self::getEntityManager()->getRepository(Course::class);
-        $courses = $courseRepository->findAll();
-        self::assertNotEmpty($courses);
-        $actualCoursesCount = count($courses);
-
-        self::assertCount($actualCoursesCount, $crawler->filter('.course-card'));
+        self::assertCount(7, $crawler->filter('.course-card'));
     }
 
     public function testFreeCoursesAccess(): void
     {
+        $this->mockBillingClient();
         $client = self::getClient();
 
         $crawler = $client->request('GET', '/courses/');
-
-        $actualFreeCoursesCount = 3;
 
         self::assertCount(3, $crawler->filter('.course-card'));
 
@@ -166,6 +205,26 @@ class CourseControllerTest extends AbstractTest
         }
     }
 
+    public function testPaidCoursesAccess()
+    {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
+        $paidCoursesCodes = ['PPBI', 'PPBI2', 'MSC', 'CAMP'];
+
+        /** @var CourseRepository $courseRepository */
+        $courseRepository = self::getEntityManager()->getRepository(Course::class);
+        $client = self::getClient();
+        foreach ($paidCoursesCodes as $code) {
+            $course = $courseRepository->findOneBy(['code' => $code]);
+            $client->request('GET', '/courses/' . $course->getId());
+            $this->assertResponseCode(Response::HTTP_NOT_ACCEPTABLE, $client->getResponse());
+        }
+    }
+
     public function testCourseLessonsCount(): void
     {
         $auth = new AuthTest();
@@ -176,23 +235,28 @@ class CourseControllerTest extends AbstractTest
 
         $client = self::getClient();
 
+        $userCoursesCodes = ['MSC', 'PPBI'];
+
+        /** @var CourseRepository $courseRepository */
         $courseRepository = self::getEntityManager()->getRepository(Course::class);
-        $courses = $courseRepository->findAll();
-        self::assertNotEmpty($courses);
-
-        $userCoursesCodes = [''];
-
-        foreach ($courses as $course) {
+        foreach ($userCoursesCodes as $code) {
+            $course = $courseRepository->findOneBy(['code' => $code]);
             $crawler = $client->request('GET', '/courses/' . $course->getId());
             $this->assertResponseOk();
 
-            $actualLessonsCount = count($course->getLessons());
+            $actualLessonsCount = \count($course->getLessons());
             self::assertCount($actualLessonsCount, $crawler->filter('.list-group-item'));
         }
     }
 
     public function testCourseCreationWithValidFields(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $crawler = $client->request('GET', '/courses/');
@@ -212,13 +276,21 @@ class CourseControllerTest extends AbstractTest
         self::assertTrue($client->getResponse()->isRedirect('/courses/'));
         $crawler = $client->followRedirect();
 
+        file_put_contents('lpg.html', $crawler->html());
+
         $courseRepository = self::getEntityManager()->getRepository(Course::class);
-        $actualCoursesCount = count($courseRepository->findAll());
+        $actualCoursesCount = \count($courseRepository->findAll());
         self::assertCount($actualCoursesCount, $crawler->filter('.course-card'));
     }
 
     public function testCourseCreationWithBlankFields(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $crawler = $client->request('GET', '/courses/');
@@ -251,6 +323,12 @@ class CourseControllerTest extends AbstractTest
 
     public function testCourseCreationWithInvalidLengthFields(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $crawler = $client->request('GET', '/courses/');
@@ -318,6 +396,12 @@ class CourseControllerTest extends AbstractTest
 
     public function testCourseCreationWithNonUniqueCodeField(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $crawler = $client->request('GET', '/courses/');
@@ -340,6 +424,12 @@ class CourseControllerTest extends AbstractTest
 
     public function testCourseDelete(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $crawler = $client->request('GET', '/courses/');
@@ -357,13 +447,19 @@ class CourseControllerTest extends AbstractTest
         $courseRepository = self::getEntityManager()->getRepository(Course::class);
         $courses = $courseRepository->findAll();
         self::assertNotEmpty($courses);
-        $actualCoursesCount = count($courses);
+        $actualCoursesCount = \count($courses);
 
         self::assertCount($actualCoursesCount, $crawler->filter('.course-card'));
     }
 
     public function testCourseEditForm(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $crawler = $client->request('GET', '/courses/');
@@ -390,6 +486,7 @@ class CourseControllerTest extends AbstractTest
 
         self::assertTrue($client->getResponse()->isRedirect('/courses/' . $course->getId()));
         $crawler = $client->followRedirect();
+        file_put_contents('qwe.html', $crawler->html());
         $this->assertResponseOk();
 
         $courseName = $crawler->filter('.card-title')->text();

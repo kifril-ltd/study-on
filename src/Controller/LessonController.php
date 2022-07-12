@@ -10,6 +10,7 @@ use App\Service\BillingClient;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/lessons')]
@@ -34,15 +35,16 @@ class LessonController extends AbstractController
 
         $apiToken = $this->getUser()->getApiToken();
         $transaction = $billingClient->getTransactions(
-            ['course_code' => $course->getCode(), 'skip_expired' => true],
+            ['type' => 'payment', 'course_code' => $course->getCode(), 'skip_expired' => true],
             $apiToken
         );
+
         if ($transaction) {
             return $this->render('lesson/show.html.twig', [
                 'lesson' => $lesson,
             ]);
         }
-        throw new \Exception('Данный курс вам недоступен!');
+        throw new HttpException(Response::HTTP_NOT_ACCEPTABLE,'Данный курс вам недоступен!');
     }
 
     #[Route('/{id}/edit', name: 'app_lesson_edit', methods: ['GET', 'POST'])]

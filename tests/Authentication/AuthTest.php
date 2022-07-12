@@ -27,18 +27,20 @@ class AuthTest extends AbstractTest
         $crawler = $client->request('GET', '/login');
         $this->assertResponseOk();
 
-        $form = $crawler->selectButton('Sign In')->form();
-        $form['email'] = $userDto->username;
-        $form['password'] = $userDto->password;
-        $client->submit($form);
+        $submitButton = $crawler->selectButton('Sign in');
+        $form = $submitButton->form([
+            'username' => $userDto->username,
+            'password' => $userDto->password
+        ]);
+        $crawler = $client->submit($form);
 
         $error = $crawler->filter('#errors');
         self::assertCount(0, $error);
 
         $crawler = $client->followRedirect();
+        file_put_contents('log1.html', $crawler->html());
         $this->assertResponseOk();
         self::assertEquals('/courses/', $client->getRequest()->getPathInfo());
-        return $crawler;
     }
 
 

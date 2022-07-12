@@ -5,6 +5,7 @@ namespace App\Tests\Mock;
 use App\Dto\Request\UserAuthRequestDto;
 use App\Dto\Request\UserRegisterDto;
 use App\Dto\Response\CurrentUserDto;
+use App\Dto\Response\Transformer\UserAuthDtoTransformer;
 use App\Dto\Response\UserAuthResponseDto;
 use App\Dto\UserDto;
 use App\Exception\BillingException;
@@ -127,7 +128,8 @@ class BillingClientMock extends BillingClient
         ) {
             $userAuthResponse = new UserAuthResponseDto();
             $userAuthResponse->token = $this->generateToken('ROLE_USER', $this->user->username);
-            return $userAuthResponse;
+            $userAuthResponse->refreshToken = '999';
+            return (new UserAuthDtoTransformer())->transformToObject($userAuthResponse);
         }
 
         if (
@@ -135,8 +137,9 @@ class BillingClientMock extends BillingClient
             $userAuthRequest->password === $this->userAdmin->password
         ) {
             $userAuthResponse = new UserAuthResponseDto();
-            $userAuthResponse->token = $this->generateToken('ROLE_SUPER_ADMIN', $this->user->username);
-            return $userAuthResponse;
+            $userAuthResponse->token = $this->generateToken('ROLE_SUPER_ADMIN', $this->userAdmin->username);
+            $userAuthResponse->refreshToken = '999';
+            return (new UserAuthDtoTransformer())->transformToObject($userAuthResponse);
         }
 
         throw new UserNotFoundException('Проверьте правильность введённого логина и пароля');
@@ -154,7 +157,8 @@ class BillingClientMock extends BillingClient
 
         $registerResponse = new UserAuthResponseDto();
         $registerResponse->token = $this->generateToken('ROLE_USER', $registerRequest->username);
-        return $registerResponse;
+        $registerResponse->refreshToken = '123';
+        return (new UserAuthDtoTransformer())->transformToObject($registerResponse);
     }
 
     public function getUser($token)
@@ -192,7 +196,7 @@ class BillingClientMock extends BillingClient
             $roles = ["ROLE_SUPER_ADMIN", "ROLE_USER"];
         }
         $data = [
-            'username' => $username,
+            'email' => $username,
             'roles' => $roles,
             'exp' => (new \DateTime('+ 1 hour'))->getTimestamp(),
         ];
@@ -222,6 +226,7 @@ class BillingClientMock extends BillingClient
 
         $user = $this->jwtDecode($token);
 
+
         if ($user['username'] === $this->userAdmin->username) {
             return [];
         }
@@ -242,7 +247,7 @@ class BillingClientMock extends BillingClient
 
         if (isset($filters['skip_expired'])) {
             $filteredTransactions = array_filter($filteredTransactions, function ($transaction) use ($filters) {
-                return $transaction['expires_at'] > new \DateTimeImmutable();
+                return !isset($transaction['expires_at']) || $transaction['expires_at'] > new \DateTimeImmutable();
             });
         }
 

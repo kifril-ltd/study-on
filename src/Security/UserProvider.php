@@ -2,6 +2,10 @@
 
 namespace App\Security;
 
+use App\Exception\BillingUnavailableException;
+use App\Service\BillingClient;
+use App\Service\JwtDecoder;
+use DateTime;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -11,6 +15,13 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
 {
+    private BillingClient $billingClient;
+
+    public function __construct(BillingClient $billingClient)
+    {
+        $this->billingClient = $billingClient;
+    }
+
     /**
      * Symfony calls this method if you use features like switch_user
      * or remember_me.
@@ -51,10 +62,24 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
         if (!$user instanceof User) {
             throw new UnsupportedUserException(sprintf('Invalid user class "%s".', get_class($user)));
         }
+        $apiToken = $user->getApiToken();
+        $decodeApiToken = JwtDecoder::decode($apiToken);
 
+        $tokenExp = (new DateTime())->setTimestamp($decodeApiToken['exp']);
+        $curTime = (new DateTime())->add(new \DateInterval('PT5M'));
+
+        if ($curTime >= $tokenExp) {
+            try {
+                $refresh = $this->billingClient->refreshToken($user->getRefreshToken());
+                $user->setApiToken($refresh['token']);
+                $user->setRefreshToken($refresh['refresh_token']);
+            } catch (BillingUnavailableException $exception) {
+                throw new \Exception($exception->getMessage());
+            }
+        }
         // Return a User object after making sure its data is "fresh".
         // Or throw a UsernameNotFoundException if the user no longer exists.
-       return $user;
+        return $user;
     }
 
     /**

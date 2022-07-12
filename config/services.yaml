@@ -25,3 +25,11 @@ services:
 
     api:
         class: App\Service\BillingClient
+
+    App\Service\BillingClient:
+        public: true
+        autowire: true
+
+    App\Service\JwtDecoder:
+        public: true
+        autowire: true

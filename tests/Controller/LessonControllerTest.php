@@ -5,9 +5,30 @@ namespace App\Tests\Controller;
 use App\DataFixtures\CourseFixtures;
 use App\Entity\Course;
 use App\Tests\AbstractTest;
+use App\Tests\Authentication\AuthTest;
+use JMS\Serializer\SerializerInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 class LessonControllerTest extends AbstractTest
 {
+    private $userAuthData = [
+        'username' => 'user@study-on.local',
+        'password' => 'Qwerty123'
+    ];
+
+    private $adminAuthData = [
+        'username' => 'admin@study-on.local',
+        'password' => 'Qwerty123'
+    ];
+
+    private SerializerInterface $serializer;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->serializer = self::getContainer()->get(SerializerInterface::class);
+    }
+
     protected function getFixtures(): array
     {
         return [CourseFixtures::class];
@@ -15,6 +36,12 @@ class LessonControllerTest extends AbstractTest
 
     public function testLessonPagesResponseIsSuccessful(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $courseRepository = self::getEntityManager()->getRepository(Course::class);
@@ -23,19 +50,32 @@ class LessonControllerTest extends AbstractTest
         foreach ($courses as $course) {
             foreach ($course->getLessons() as $lesson) {
                 $client->request('GET', '/lessons/' . $lesson->getId());
-                $this->assertResponseOk();
+                if ($course->getCode() === 'PPBIB' || $course->getCode() === 'MSCB' || $course->getCode() === 'CAMPB') {
+                    $this->assertResponseOk();
+                } else {
+                    $this->assertResponseCode(Response::HTTP_NOT_ACCEPTABLE, $client->getResponse());
+                }
 
                 $client->request('GET', '/lessons/' . $lesson->getId() . '/edit');
                 $this->assertResponseOk();
 
+
                 $client->request('POST', '/lessons/' . $lesson->getId() . '/edit');
-                $this->assertResponseOk();
+
+                    $this->assertResponseOk();
+
             }
         }
     }
 
     public function testLessonCreationWithValidFields(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $crawler = $client->request('GET', '/courses/');
@@ -71,6 +111,12 @@ class LessonControllerTest extends AbstractTest
 
     public function testLessonCreationWithBlankFields(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $crawler = $client->request('GET', '/courses/');
@@ -120,6 +166,12 @@ class LessonControllerTest extends AbstractTest
 
     public function testLessonCreationWithInvalidLengthFields(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $crawler = $client->request('GET', '/courses/');
@@ -163,6 +215,12 @@ class LessonControllerTest extends AbstractTest
 
     public function testLessonsDeleteAfterCourseDelete(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $crawler = $client->request('GET', '/courses/');
@@ -187,6 +245,12 @@ class LessonControllerTest extends AbstractTest
 
     public function testLessonDelete(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $crawler = $client->request('GET', '/courses/');
@@ -205,11 +269,17 @@ class LessonControllerTest extends AbstractTest
         $crawler = $client->followRedirect();
         $this->assertResponseOk();
 
-        self::assertCount(3, $crawler->filter('.list-group-item'));
+        self::assertCount(0, $crawler->filter('.list-group-item'));
     }
 
     public function testLessonEditForm(): void
     {
+        $auth = new AuthTest();
+        $auth->setSerializer($this->serializer);
+
+        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $crawler = $auth->auth($authRequest);
+
         $client = self::getClient();
 
         $crawler = $client->request('GET', '/courses/');
@@ -219,6 +289,7 @@ class LessonControllerTest extends AbstractTest
         $crawler = $client->click($link);
         $this->assertResponseOk();
 
+//        file_put_contents('les.html', $crawler->html());
         $lessonLink = $crawler->filter('.list-group-item > a')->first()->link();
         $crawler = $client->click($lessonLink);
         $this->assertResponseOk();

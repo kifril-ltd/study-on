@@ -77,7 +77,6 @@ class BillingClient
             null,
             'Сервис регистрации недоступен. Попробуйте зарегистрироваться позже.');
         $response = $api->exec();
-
         $result = json_decode($response, true);
         if (isset($result['errors'])) {
             throw new BillingException(json_encode($result['errors']));
@@ -86,6 +85,25 @@ class BillingClient
         $userDto = $this->serializer->deserialize($response, UserAuthResponseDto::class, 'json');
 
         return (new UserAuthDtoTransformer())->transformToObject($userDto);
+    }
+
+    public function refreshToken($refreshToken)
+    {
+        $api = new ApiService(
+            '/api/v1/token/refresh',
+            'POST',
+            ['refresh_token' => $refreshToken],
+            null,
+            null,
+            'Сервис биллинга недоступен.');
+        $response = $api->exec();
+
+        $result = json_decode($response, true);
+        if (isset($result['errors'])) {
+            throw new BillingException(json_encode($result['errors']));
+        }
+
+        return $this->serializer->deserialize($response, 'array', 'json');
     }
 
     public function getAllCourses()
