@@ -129,7 +129,7 @@ class CourseController extends AbstractController
             $apiToken
         );
 
-        if ($transaction) {
+        if ($transaction || $this->isGranted('ROLE_SUPER_ADMIN')) {
             return $this->render('course/show.html.twig', [
                 'course' => $course,
             ]);

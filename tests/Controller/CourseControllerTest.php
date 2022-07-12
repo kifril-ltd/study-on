@@ -87,11 +87,7 @@ class CourseControllerTest extends AbstractTest
 
         foreach ($courses as $course) {
             $client->request('GET', '/courses/' . $course->getId());
-            if ($course->getCode() === 'PPBIB' || $course->getCode() === 'MSCB' || $course->getCode() === 'CAMPB') {
-                $this->assertResponseOk();
-            } else {
-                $this->assertResponseCode(Response::HTTP_NOT_ACCEPTABLE, $client->getResponse());
-            }
+            $this->assertResponseOk();
 
             $client->request('GET', '/courses/' . $course->getId() . '/edit');
             $this->assertResponseOk();
@@ -210,10 +206,10 @@ class CourseControllerTest extends AbstractTest
         $auth = new AuthTest();
         $auth->setSerializer($this->serializer);
 
-        $authRequest = $this->serializer->serialize($this->adminAuthData, 'json');
+        $authRequest = $this->serializer->serialize($this->userAuthData, 'json');
         $crawler = $auth->auth($authRequest);
 
-        $paidCoursesCodes = ['PPBI', 'PPBI2', 'MSC', 'CAMP'];
+        $paidCoursesCodes = ['PPBI2', 'CAMP'];
 
         /** @var CourseRepository $courseRepository */
         $courseRepository = self::getEntityManager()->getRepository(Course::class);

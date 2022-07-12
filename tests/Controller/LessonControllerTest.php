@@ -50,20 +50,13 @@ class LessonControllerTest extends AbstractTest
         foreach ($courses as $course) {
             foreach ($course->getLessons() as $lesson) {
                 $client->request('GET', '/lessons/' . $lesson->getId());
-                if ($course->getCode() === 'PPBIB' || $course->getCode() === 'MSCB' || $course->getCode() === 'CAMPB') {
-                    $this->assertResponseOk();
-                } else {
-                    $this->assertResponseCode(Response::HTTP_NOT_ACCEPTABLE, $client->getResponse());
-                }
+                $this->assertResponseOk();
 
                 $client->request('GET', '/lessons/' . $lesson->getId() . '/edit');
                 $this->assertResponseOk();
 
-
                 $client->request('POST', '/lessons/' . $lesson->getId() . '/edit');
-
-                    $this->assertResponseOk();
-
+                $this->assertResponseOk();
             }
         }
     }
@@ -289,7 +282,6 @@ class LessonControllerTest extends AbstractTest
         $crawler = $client->click($link);
         $this->assertResponseOk();
 
-//        file_put_contents('les.html', $crawler->html());
         $lessonLink = $crawler->filter('.list-group-item > a')->first()->link();
         $crawler = $client->click($lessonLink);
         $this->assertResponseOk();
