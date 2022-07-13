@@ -76,20 +76,41 @@ class CourseController extends AbstractController
     }
 
     #[Route('/new', name: 'app_course_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, CourseRepository $courseRepository): Response
+    public function new(Request $request, CourseRepository $courseRepository, BillingClient $billingClient): Response
     {
         $course = new Course();
         $form = $this->createForm(CourseType::class, $course);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $courseRepository->add($course);
-            return $this->redirectToRoute('app_course_index', [], Response::HTTP_SEE_OTHER);
+            try {
+                $billingResponse = $billingClient->newCourse(
+                    [
+                        'code' => $form->get('code')->getData(),
+                        'title' => $form->get('name')->getData(),
+                        'type' => $form->get('type')->getData(),
+                        'price' => $form->get('price')->getData()
+                    ],
+                    $this->getUser()->getApiToken()
+                );
+                $courseRepository->add($course);
+                return $this->redirectToRoute('app_course_index', [], Response::HTTP_SEE_OTHER);
+            } catch (BillingException $exception) {
+                return $this->redirectToRoute(
+                    'app_course_new',
+                    [
+                        'form' => $form,
+                        'course' => $course,
+                        'error' => $exception->getMessage()
+                    ]
+                );
+            }
         }
 
         return $this->renderForm('course/new.html.twig', [
             'course' => $course,
             'form' => $form,
+            'error' => $request->get('error')
         ]);
     }
 
@@ -138,19 +159,68 @@ class CourseController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_course_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Course $course, CourseRepository $courseRepository): Response
+    public function edit(
+        Request          $request,
+        Course           $course,
+        CourseRepository $courseRepository,
+        BillingClient    $billingClient): Response
     {
-        $form = $this->createForm(CourseType::class, $course);
-        $form->handleRequest($request);
+        $oldCourseCode = $course->getCode();
+
+        try {
+            $billingCourse = $billingClient->getCourseByCode($oldCourseCode);
+            $form = $this->createForm(
+                CourseType::class,
+                $course,
+                [
+                    'type' => $billingCourse['type'],
+                    'price' => $billingCourse['price']
+                ]
+            );
+            $form->handleRequest($request);
+        } catch (BillingException $exception) {
+            return $this->render(
+                'course/edit.html.twig',
+                [
+                    'course' => $course,
+                    'form' => $form->createView(),
+                    'error' => 'Курс с таким кодом не найден!'
+                ]
+            );
+        }
+
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $courseRepository->add($course);
-            return $this->redirectToRoute('app_course_show', ['id' => $course->getId()], Response::HTTP_SEE_OTHER);
+            try {
+                $billingResponse = $billingClient->editCourse(
+                    $oldCourseCode,
+                    [
+                        'code' => $form->get('code')->getData(),
+                        'title' => $form->get('name')->getData(),
+                        'type' => $form->get('type')->getData(),
+                        'price' => $form->get('price')->getData()
+                    ],
+                    $this->getUser()->getApiToken()
+                );
+                $courseRepository->add($course);
+                return $this->redirectToRoute('app_course_show', ['id' => $course->getId()], Response::HTTP_SEE_OTHER);
+            } catch (BillingException $exception) {
+                return $this->render(
+                    'course/edit.html.twig',
+                    [
+                        'course' => $course,
+                        'form' => $form->createView(),
+                        'error' => $exception->getMessage()
+                    ]
+                );
+            }
+
         }
 
         return $this->renderForm('course/edit.html.twig', [
             'course' => $course,
             'form' => $form,
+            'error' => ''
         ]);
     }
 

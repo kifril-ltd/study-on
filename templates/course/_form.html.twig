@@ -1,3 +1,7 @@
+{% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
 {{ form_start(form) }}
     {{ form_widget(form) }}
     <button class="btn btn-success">{{ button_label|default('Сохранить') }}</button>

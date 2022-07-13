@@ -187,4 +187,48 @@ class BillingClient
 
         return $this->serializer->deserialize($response, 'array', 'json');
     }
+
+    public function newCourse($courseData, $token)
+    {
+        $api = new ApiService(
+            '/api/v1/courses/new',
+            'POST',
+            $courseData,
+            null,
+            [
+                'Accept: application/json',
+                'Authorization: Bearer ' . $token
+            ],
+            'Сервис биллинга недоступен.');
+        $response = $api->exec();
+        $result = json_decode($response, true);
+
+        if (!$result['success']) {
+            throw new BillingException($result['message']);
+        }
+
+        return $this->serializer->deserialize($response, 'array', 'json');
+    }
+
+    public function editCourse($oldCourseCode, $courseData, $token)
+    {
+        $api = new ApiService(
+            '/api/v1/courses/' . $oldCourseCode . '/edit',
+            'POST',
+            $courseData,
+            null,
+            [
+                'Accept: application/json',
+                'Authorization: Bearer ' . $token
+            ],
+            'Сервис биллинга недоступен.');
+        $response = $api->exec();
+        $result = json_decode($response, true);
+
+        if (!$result['success']) {
+            throw new BillingException($result['message']);
+        }
+
+        return $this->serializer->deserialize($response, 'array', 'json');
+    }
 }
