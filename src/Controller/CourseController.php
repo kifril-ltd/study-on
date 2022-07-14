@@ -174,7 +174,7 @@ class CourseController extends AbstractController
                 $course,
                 [
                     'type' => $billingCourse['type'],
-                    'price' => $billingCourse['price']
+                    'price' => (float) $billingCourse['price']
                 ]
             );
             $form->handleRequest($request);

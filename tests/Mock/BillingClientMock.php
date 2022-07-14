@@ -46,36 +46,43 @@ class BillingClientMock extends BillingClient
         $this->courses = [
             [
                 'code' => 'PPBIB',
+                'title' => 'Программирование на Python (базовый)',
                 'type' => $courseTypes[2],
                 'price' => 2000,
             ],
             [
                 'code' => 'PPBI',
+                'title' => 'Программирование на Python (продвинутый)',
                 'type' => $courseTypes[1],
                 'price' => 2000,
             ],
             [
                 'code' => 'PPBI2',
+                'title' => 'Программирование на Python 2',
                 'type' => $courseTypes[3],
                 'price' => 2000,
             ],
             [
                 'code' => 'MSCB',
+                'title' => 'Математическая статистика (базовый)',
                 'type' => $courseTypes[2],
                 'price' => 1000,
             ],
             [
                 'code' => 'MSC',
+                'title' => 'Математическая статистика',
                 'type' => $courseTypes[3],
                 'price' => 1000,
             ],
             [
                 'code' => 'CAMPB',
+                'title' => 'Курс подготовки вожатых (базовый)',
                 'type' => $courseTypes[2],
                 'price' => 3000,
             ],
             [
                 'code' => 'CAMP',
+                'title' => 'Курс подготовки вожатых (продвинутый)',
                 'type' => $courseTypes[1],
                 'price' => 3000,
             ],
@@ -252,5 +259,61 @@ class BillingClientMock extends BillingClient
         }
 
         return $filteredTransactions;
+    }
+
+    public function newCourse($courseData, $token)
+    {
+        if ($token === '') {
+            throw new AccessDeniedException();
+        }
+
+        $user = $this->jwtDecode($token);
+
+        if (!in_array('ROLE_SUPER_ADMIN', $user['roles'], true)) {
+            throw new AccessDeniedException();
+        }
+
+        if (in_array($courseData['code'], array_column($this->courses, 'code'), true)) {
+            throw new BillingException('Курс с данным кодом уже существует');
+        }
+
+        $this->courses[] = $courseData;
+
+        return [
+            'success' => true
+        ];
+    }
+
+    public function editCourse($oldCourseCode, $courseData, $token)
+    {
+        if ($token === '') {
+            throw new AccessDeniedException();
+        }
+
+        $user = $this->jwtDecode($token);
+
+        if (!in_array($oldCourseCode, array_column($this->courses, 'code'), true)) {
+            throw new BillingException('Курс с данным кодом не найден');
+        }
+
+        if (
+            $oldCourseCode !== $courseData['code'] &&
+            in_array($courseData['code'], array_column($this->courses, 'code'), true)
+        ) {
+            throw new BillingException('Курс с данным кодом уже существует');
+        }
+
+        foreach ($this->courses as &$course) {
+            if ($course['code'] === $oldCourseCode) {
+                $course['code'] = $courseData['code'];
+                $course['type'] = $courseData['type'];
+                $course['title'] = $courseData['title'];
+                $course['price'] = $courseData['price'];
+            }
+        }
+
+        return [
+            'success' => true
+        ];
     }
 }

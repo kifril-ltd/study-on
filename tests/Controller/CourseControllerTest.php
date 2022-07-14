@@ -262,17 +262,25 @@ class CourseControllerTest extends AbstractTest
         $crawler = $client->click($link);
         $this->assertResponseOk();
 
+        $courseData = [
+            'code' => 'QWERTY',
+            'title' => 'Новый курс',
+            'type' => 'rent',
+            'price' => 1000,
+            'description' => 'Описание курса'
+        ];
+
         $submitButton = $crawler->selectButton('Сохранить');
         $form = $submitButton->form([
-            'course[code]' => 'QWERTY',
-            'course[name]' => 'Новый курс',
-            'course[description]' => 'Курс для теста',
+            'course[code]' => $courseData['code'],
+            'course[name]' => $courseData['title'],
+            'course[type]' => $courseData['type'],
+            'course[price]' => $courseData['price'],
+            'course[description]' => $courseData['description'],
         ]);
         $client->submit($form);
         self::assertTrue($client->getResponse()->isRedirect('/courses/'));
         $crawler = $client->followRedirect();
-
-        file_put_contents('lpg.html', $crawler->html());
 
         $courseRepository = self::getEntityManager()->getRepository(Course::class);
         $actualCoursesCount = \count($courseRepository->findAll());
@@ -296,11 +304,21 @@ class CourseControllerTest extends AbstractTest
         $crawler = $client->click($link);
         $this->assertResponseOk();
 
+        $courseData = [
+            'code' => 'QWERTY',
+            'title' => 'Новый курс',
+            'type' => 'rent',
+            'price' => 1000,
+            'description' => 'Описание курса'
+        ];
+
         $submitButton = $crawler->selectButton('Сохранить');
         $form = $submitButton->form([
             'course[code]' => '',
-            'course[name]' => 'Новый курс',
-            'course[description]' => 'Курс для теста',
+            'course[name]' => $courseData['title'],
+            'course[type]' => $courseData['type'],
+            'course[price]' => $courseData['price'],
+            'course[description]' => '',
         ]);
         $crawler = $client->submit($form);
         $error = $crawler->filter('.invalid-feedback')->first();
@@ -334,6 +352,14 @@ class CourseControllerTest extends AbstractTest
         $crawler = $client->click($link);
         $this->assertResponseOk();
 
+        $courseData = [
+            'code' => 'QWERTY',
+            'title' => 'Новый курс',
+            'type' => 'rent',
+            'price' => 1000,
+            'description' => 'Описание курса'
+        ];
+
         $submitButton = $crawler->selectButton('Сохранить');
         $form = $submitButton->form([
             'course[code]' => 'QWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQW
@@ -344,6 +370,8 @@ class CourseControllerTest extends AbstractTest
                 QWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERT
                 YQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWER',
             'course[name]' => 'Новый курс',
+            'course[type]' => $courseData['type'],
+            'course[price]' => $courseData['price'],
             'course[description]' => 'Курс для теста',
         ]);
         $crawler = $client->submit($form);
@@ -361,6 +389,8 @@ class CourseControllerTest extends AbstractTest
                 YQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWER
                 QWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERT
                 YQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWER',
+            'course[type]' => $courseData['type'],
+            'course[price]' => $courseData['price'],
             'course[description]' => 'Курс для теста',
         ]);
         $crawler = $client->submit($form);
@@ -371,6 +401,8 @@ class CourseControllerTest extends AbstractTest
         $form = $submitButton->form([
             'course[code]' => 'QWERTY',
             'course[name]' => 'Новый курс',
+            'course[type]' => $courseData['type'],
+            'course[price]' => $courseData['price'],
             'course[description]' => 'QWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQW
                 ERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQ
                 WERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTYQWERTY
@@ -407,12 +439,23 @@ class CourseControllerTest extends AbstractTest
         $crawler = $client->click($link);
         $this->assertResponseOk();
 
+        $courseData = [
+            'code' => 'PPBI',
+            'title' => 'Новый курс',
+            'type' => 'rent',
+            'price' => 1000,
+            'description' => 'Описание курса'
+        ];
+
         $submitButton = $crawler->selectButton('Сохранить');
         $form = $submitButton->form([
-            'course[code]' => 'PPBI',
-            'course[name]' => 'Новый курс',
-            'course[description]' => 'Курс для теста',
+            'course[code]' => $courseData['code'],
+            'course[name]' => $courseData['title'],
+            'course[type]' => $courseData['type'],
+            'course[price]' => $courseData['price'],
+            'course[description]' => $courseData['description'],
         ]);
+
         $crawler = $client->submit($form);
         $error = $crawler->filter('.invalid-feedback')->first();
         self::assertEquals('Это значение уже используется.', $error->text());
@@ -469,26 +512,38 @@ class CourseControllerTest extends AbstractTest
         $crawler = $client->click($link);
         $this->assertResponseOk();
 
-        $submitButton = $crawler->selectButton('Сохранить');
-        $form = $submitButton->form();
-        $course = self::getEntityManager()
-            ->getRepository(Course::class)
-            ->findOneBy(['code' => $form['course[code]']->getValue()]);
+        $courseData = [
+            'code' => 'PPBI34',
+            'title' => 'Изменения',
+            'type' => 'rent',
+            'price' => 1000,
+            'description' => 'Описание курса новое'
+        ];
 
-        $form['course[code]'] = 'EDITCOURSE';
-        $form['course[name]'] = 'Измененный курс';
-        $form['course[description]'] = 'Измененный курс';
+        $submitButton = $crawler->selectButton('Сохранить');
+        $form = $submitButton->form([
+            'course[code]' => $courseData['code'],
+            'course[name]' => $courseData['title'],
+            'course[type]' => $courseData['type'],
+            'course[price]' => $courseData['price'],
+            'course[description]' => $courseData['description'],
+        ]);
         $client->submit($form);
 
-        self::assertTrue($client->getResponse()->isRedirect('/courses/' . $course->getId()));
+        /** @var CourseRepository $courseRepository */
+        $courseRepository = self::getEntityManager()->getRepository(Course::class);
+        $editedCourse = $courseRepository->findOneBy(['code' => $courseData['code']]);
+
+        self::assertNotNull($editedCourse);
+        self::assertTrue($client->getResponse()->isRedirect('/courses/' . $editedCourse->getId()));
         $crawler = $client->followRedirect();
-        file_put_contents('qwe.html', $crawler->html());
+
         $this->assertResponseOk();
 
         $courseName = $crawler->filter('.card-title')->text();
-        self::assertEquals('Измененный курс', $courseName);
+        self::assertEquals('Изменения', $courseName);
 
         $courseDescription = $crawler->filter('.card-text')->text();
-        self::assertEquals('Измененный курс', $courseDescription);
+        self::assertEquals('Описание курса новое', $courseDescription);
     }
 }
