@@ -1,0 +1,42 @@
+language: php
+php:
+  - 8.0
+
+cache:
+  directories:
+    - ${HOME}/.composer/cache
+    - ./bin/.phpunit
+
+services:
+  - docker
+
+addons:
+  apt:
+    packages:
+      - docker-ce
+
+before_install:
+  - sudo chown -R ${UID:-1000}:${GID:-1000} $PWD
+  - sudo chown -R ${UID:-1000}:${GID:-1000} ${HOME}/.yarn
+  - sudo chown -R ${UID:-1000}:${GID:-1000} ${HOME}/.composer
+  - sudo /etc/init.d/mysql stop
+  - sudo /etc/init.d/postgresql stop
+  - cp .env.test.local.travis .env.test.local
+  - cp .env.local.travis .env.local
+  - docker network create billing_study_on
+
+install:
+  - docker-compose --env=.env.local build
+  - docker-compose --env=.env.local up -d
+  - docker exec -it study_on_php composer install
+  - docker exec -it study_on_php bin/console doctrine:database:create --env=test
+  - docker exec -it study_on_php bin/console doctrine:migrations:migrate --env=test --no-interaction
+  - docker exec -it study_on_php bin/console doctrine:fixtures:load --env=test --no-interaction
+  - docker run node yarn install
+  - docker run node yarn encore dev
+
+script:
+  - docker exec it study_on_php bin/phpunit
+
+after_script:
+  - docker-compose --env=.env.local down
